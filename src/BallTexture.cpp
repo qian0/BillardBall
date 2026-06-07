@@ -87,11 +87,8 @@ Texture BallTexture::generate(int number, glm::vec3 color, const std::string &fo
 {
     std::vector<unsigned char> pixels(size * size * 4);
 
-    // Fill background with ball colour
-    unsigned char br = static_cast<unsigned char>(color.r * 255);
-    unsigned char bg = static_cast<unsigned char>(color.g * 255);
-    unsigned char bb = static_cast<unsigned char>(color.b * 255);
-    fillRect(pixels, size, 0, 0, size, size, br, bg, bb, 255);
+    // Transparent background — ball colour is supplied via uBallColor uniform
+    fillRect(pixels, size, 0, 0, size, size, 0, 0, 0, 0);
 
     // White disc centred on the texture — the label circle
     int cx = size / 2;
@@ -111,7 +108,7 @@ Texture BallTexture::generate(int number, glm::vec3 color, const std::string &fo
     float fontSize = static_cast<float>(discRadius) * 1.1f;
     float scale = stbtt_ScaleForPixelHeight(&font, fontSize);
 
-    // Measure total advance width to centre the label horizontally
+    // Measure total advance width for horizontal centering
     int totalW = 0;
     for (char c : label) {
         int advance, lsb;
@@ -119,12 +116,19 @@ Texture BallTexture::generate(int number, glm::vec3 color, const std::string &fo
         totalW += static_cast<int>(advance * scale);
     }
 
-    int ascent, descent, lineGap;
-    stbtt_GetFontVMetrics(&font, &ascent, &descent, &lineGap);
-    int glyphH = static_cast<int>((ascent - descent) * scale);
-
+    // Measure the tight pixel bounding box of the label for vertical centering.
+    // Using the full line height (ascent+descent) would push digits upward because
+    // they have no descenders — the tight box gives the actual rendered extent.
+    int labelTop = INT_MAX, labelBot = INT_MIN;
+    for (char c : label) {
+        int ix0, iy0, ix1, iy1;
+        stbtt_GetCodepointBitmapBox(&font, c, scale, scale, &ix0, &iy0, &ix1, &iy1);
+        if (iy0 < labelTop) { labelTop = iy0; }
+        if (iy1 > labelBot) { labelBot = iy1; }
+    }
+    // baseline such that the tight box midpoint lands on cy
+    int baseline = cy - (labelTop + labelBot) / 2;
     int penX = cx - totalW / 2;
-    int penY = cy - static_cast<int>(ascent * scale) + glyphH / 2;
 
     // Rasterize each character of the label and blit it onto the disc
     for (char c : label) {
@@ -132,7 +136,7 @@ Texture BallTexture::generate(int number, glm::vec3 color, const std::string &fo
         unsigned char *bitmap = stbtt_GetCodepointBitmap(
             &font, scale, scale, c, &gw, &gh, &ox, &oy);
 
-        blitGlyph(pixels, size, bitmap, gw, gh, penX + ox, penY + oy + static_cast<int>(ascent * scale));
+        blitGlyph(pixels, size, bitmap, gw, gh, penX + ox, baseline + oy);
 
         int advance, lsb;
         stbtt_GetCodepointHMetrics(&font, c, &advance, &lsb);

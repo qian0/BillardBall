@@ -14,13 +14,15 @@ Mesh Mesh::uvSphere(int rings, int sectors)
     vertices.reserve((rings + 1) * (sectors + 1) * 8);
     indices.reserve(rings * sectors * 6);
 
-    for (int r = 0; r <= rings; ++r) {
+    for (int r = 0; r <= rings; ++r)
+    {
         // phi sweeps from 0 (north pole) to PI (south pole)
         float phi = static_cast<float>(M_PI) * r / rings;
         float sinPhi = std::sin(phi);
         float cosPhi = std::cos(phi);
 
-        for (int s = 0; s <= sectors; ++s) {
+        for (int s = 0; s <= sectors; ++s)
+        {
             // theta sweeps a full circle around the Y axis
             float theta = 2.0f * static_cast<float>(M_PI) * s / sectors;
             float sinTheta = std::sin(theta);
@@ -46,8 +48,10 @@ Mesh Mesh::uvSphere(int rings, int sectors)
     }
 
     // Two triangles per quad, wound counter-clockwise (OpenGL front-face default)
-    for (int r = 0; r < rings; ++r) {
-        for (int s = 0; s < sectors; ++s) {
+    for (int r = 0; r < rings; ++r)
+    {
+        for (int s = 0; s < sectors; ++s)
+        {
             unsigned int tl = r * (sectors + 1) + s;
             unsigned int tr = tl + 1;
             unsigned int bl = tl + (sectors + 1);

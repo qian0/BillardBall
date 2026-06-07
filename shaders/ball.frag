@@ -2,7 +2,6 @@
 
 in vec3 vWorldPos;  // interpolated world-space position from the vertex shader
 in vec3 vNormal;    // interpolated world-space normal from the vertex shader
-in vec2 vTexCoord;  // interpolated UV from the vertex shader
 
 uniform vec3 uCameraPos;    // world-space eye position — used to compute the view direction for specular reflection
 uniform vec3 uLightDir;     // world-space direction pointing toward the light source (not the surface) — kept as a directional light so shadows are uniform across the table
@@ -22,9 +21,21 @@ void main()
     float diffuse  = max(dot(N, L), 0.0);
     float specular = pow(max(dot(R, V), 0.0), 64.0);
 
-    // Sample the ball texture; if the texture alpha is zero, fall back to the base ball colour
-    vec4 texSample = texture(uTexture, vTexCoord);
-    vec3 baseColor = mix(uBallColor, texSample.rgb, texSample.a);
+    // Decal projection: map the front hemisphere (+Z axis) to UV space.
+    // N.xy in [-0.5, 0.5] covers the full texture; disc radius is 0.25 in UV space.
+    // For a unit sphere with no rotation, the object-space normal equals vNormal.
+    vec2 decalUV = N.xy + 0.5;
+    float facing = N.z;
+    float decalAlpha = 0.0;
+    vec3 decalColor = vec3(0.0);
+    if (facing > 0.0 && decalUV.x >= 0.0 && decalUV.x <= 1.0 &&
+                         decalUV.y >= 0.0 && decalUV.y <= 1.0) {
+        vec4 texSample = texture(uTexture, decalUV);
+        // Fade the decal out near the equator so there is no hard edge
+        decalAlpha = texSample.a * clamp(facing * 4.0, 0.0, 1.0);
+        decalColor = texSample.rgb;
+    }
+    vec3 baseColor = mix(uBallColor, decalColor, decalAlpha);
 
     vec3 color = baseColor * (ambient + diffuse * 0.75) + vec3(specular * 0.6);
     FragColor = vec4(color, 1.0);
