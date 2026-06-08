@@ -34,7 +34,7 @@
 ```
 BillardBall/
 ├── CMakeLists.txt
-├── glad/                    # vendored
+├── third_party/glad/        # vendored
 ├── plan/
 │   └── plan_v0.md
 ├── src/

@@ -18,8 +18,8 @@ FetchContent_MakeAvailable(glm)
 find_package(glfw3 3.3 REQUIRED)
 
 # GLAD — vendored; exposed as a library so both the game and tests can link it
-add_library(glad STATIC glad/src/glad.c)
-target_include_directories(glad PUBLIC glad/include)
+add_library(glad STATIC third_party/glad/src/glad.c)
+target_include_directories(glad PUBLIC third_party/glad/include)
 
 # Sources
 file(GLOB_RECURSE SOURCES src/*.cpp)
