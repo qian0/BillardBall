@@ -27,6 +27,7 @@ cmake --build build -- -j$(nproc)
 # Or compile a specific target
 cmake --build build --target BillardBall
 cmake --build build --target m1_triangle
+cmake --build build --target m2_ball
 ```
 
 ## Run

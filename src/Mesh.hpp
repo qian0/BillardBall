@@ -15,6 +15,14 @@ struct Mesh
     // and a texture coordinate (location 2) in equirectangular UV space.
     static Mesh uvSphere(int rings, int sectors);
 
+    // Generates a flat quad in the XZ plane (Y=0), normal pointing up (+Y).
+    // halfW extends along X, halfH extends along Z.
+    static Mesh quad(float halfW, float halfH);
+
+    // Generates an axis-aligned box centered at the origin.
+    // halfW along X, halfH along Y, halfD along Z.
+    static Mesh box(float halfW, float halfH, float halfD);
+
     // Draws the mesh using the currently bound shader program.
     void draw() const;
 

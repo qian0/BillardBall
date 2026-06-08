@@ -12,7 +12,7 @@
 # Registers a test executable that links against the shared game helpers.
 # Copies the unit_tests/shaders/ directory next to the binary after build.
 function(add_unit_test name)
-    add_executable(${name} ${name}.cpp ${CMAKE_SOURCE_DIR}/src/Shader.cpp)
+    add_executable(${name} ${name}.cpp ${CMAKE_SOURCE_DIR}/src/Shader.cpp ${ARGN})
     target_include_directories(${name} PRIVATE ${CMAKE_SOURCE_DIR}/src)
     target_link_libraries(${name} PRIVATE glad glfw glm::glm dl)
     set_target_properties(${name} PROPERTIES
@@ -26,3 +26,17 @@ function(add_unit_test name)
 endfunction()
 
 add_unit_test(m1_triangle)
+
+add_unit_test(m2_ball
+    ${CMAKE_SOURCE_DIR}/src/Mesh.cpp
+    ${CMAKE_SOURCE_DIR}/src/Camera.cpp
+    ${CMAKE_SOURCE_DIR}/src/Texture.cpp
+    ${CMAKE_SOURCE_DIR}/src/BallTexture.cpp
+)
+target_include_directories(m2_ball PRIVATE ${CMAKE_SOURCE_DIR}/third_party)
+# Copy the font asset next to the m2_ball binary
+add_custom_command(TARGET m2_ball POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        ${CMAKE_BINARY_DIR}/unit_tests/assets
+)
