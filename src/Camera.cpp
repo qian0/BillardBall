@@ -30,10 +30,22 @@ glm::mat4 Camera::viewMatrix() const
 void Camera::onMouseDrag(float dx, float dy)
 {
     const float sensitivity = 0.005f;
-    theta -= dx * sensitivity;
+    theta += dx * sensitivity;
     phi   += dy * sensitivity;
     // Clamp elevation so the camera never flips over the poles
     phi = std::clamp(phi, 0.05f, 1.55f);
+}
+
+// Translates the orbit target along the camera's right and up axes so the scene pans with the cursor.
+// Sensitivity scales with radius so panning feels consistent at any zoom level.
+void Camera::onMousePan(float dx, float dy)
+{
+    const float sensitivity = 0.001f * radius;
+    glm::vec3 forward = glm::normalize(target - position());
+    glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3{0.0f, 1.0f, 0.0f}));
+    glm::vec3 up = glm::cross(right, forward);
+    target -= right * (dx * sensitivity);
+    target += up * (dy * sensitivity);
 }
 
 // Shrinks or grows the orbit radius so the user can dolly in and out.

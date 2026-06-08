@@ -52,11 +52,11 @@ target_include_directories(m2_ball PRIVATE ${CMAKE_SOURCE_DIR}/third_party)
 copy_assets(m2_ball m2)
 
 # --- M3 ---
-add_unit_test(m3_0_ballOnTable m3
+add_unit_test(m3_1_ballOnTable m3
     ${CMAKE_SOURCE_DIR}/src/Mesh.cpp
     ${CMAKE_SOURCE_DIR}/src/Camera.cpp
     ${CMAKE_SOURCE_DIR}/src/Texture.cpp
     ${CMAKE_SOURCE_DIR}/src/BallTexture.cpp
 )
-target_include_directories(m3_0_ballOnTable PRIVATE ${CMAKE_SOURCE_DIR}/third_party)
-copy_assets(m3_0_ballOnTable m3)
+target_include_directories(m3_1_ballOnTable PRIVATE ${CMAKE_SOURCE_DIR}/third_party)
+copy_assets(m3_1_ballOnTable m3)

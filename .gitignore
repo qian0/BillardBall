@@ -2,6 +2,7 @@
 _Debug/
 Compiled/
 build/
+**/old/
 
 # AudioCache can be rebuilt from sources
 AudioCache/

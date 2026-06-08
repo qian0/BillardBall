@@ -19,6 +19,7 @@ struct AppContext
 {
     Camera *camera;
     bool mouseDown = false;
+    bool rightMouseDown = false;
     double lastMouseX = 0.0;
     double lastMouseY = 0.0;
 };
@@ -37,7 +38,7 @@ static void onFramebufferResize(GLFWwindow * /*window*/, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-// GLFW mouse-button callback — tracks when the left button is held for drag-to-orbit.
+// GLFW mouse-button callback — tracks left button for orbit, right button for pan.
 static void onMouseButton(GLFWwindow *window, int button, int action, int /*mods*/)
 {
     auto *ctx = static_cast<AppContext *>(glfwGetWindowUserPointer(window));
@@ -45,16 +46,23 @@ static void onMouseButton(GLFWwindow *window, int button, int action, int /*mods
         ctx->mouseDown = (action == GLFW_PRESS);
         glfwGetCursorPos(window, &ctx->lastMouseX, &ctx->lastMouseY);
     }
+    if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+        ctx->rightMouseDown = (action == GLFW_PRESS);
+        glfwGetCursorPos(window, &ctx->lastMouseX, &ctx->lastMouseY);
+    }
 }
 
-// GLFW cursor-position callback — translates mouse drag deltas into camera orbit angles.
+// GLFW cursor-position callback — left drag orbits, right drag pans.
 static void onCursorPos(GLFWwindow *window, double x, double y)
 {
     auto *ctx = static_cast<AppContext *>(glfwGetWindowUserPointer(window));
+    float dx = static_cast<float>(x - ctx->lastMouseX);
+    float dy = static_cast<float>(y - ctx->lastMouseY);
     if (ctx->mouseDown) {
-        float dx = static_cast<float>(x - ctx->lastMouseX);
-        float dy = static_cast<float>(y - ctx->lastMouseY);
         ctx->camera->onMouseDrag(dx, dy);
+    }
+    if (ctx->rightMouseDown) {
+        ctx->camera->onMousePan(dx, dy);
     }
     ctx->lastMouseX = x;
     ctx->lastMouseY = y;

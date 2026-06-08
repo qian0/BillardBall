@@ -7,7 +7,6 @@ uniform vec3 uCameraPos;    // world-space eye position — used to compute the 
 uniform vec3 uLightDir;     // world-space direction pointing toward the light source (not the surface) — kept as a directional light so shadows are uniform across the table
 uniform vec3 uColor;    // base diffuse colour of the ball, used when no texture is bound
 uniform sampler2D uTexture; // ball face texture containing the number label on a white disc
-uniform mat4 uView;         // world-to-camera transform — used to project the decal into camera space
 
 out vec4 FragColor; // final RGBA colour written to the framebuffer
 
@@ -22,13 +21,12 @@ void main()
     float diffuse  = max(dot(N, L), 0.0);
     float specular = pow(max(dot(R, V), 0.0), 64.0);
 
-    // Decal projection in camera (view) space: the disc always faces the viewer.
-    // mat3(uView) rotates the world-space normal into view space; in view space the
-    // camera looks down -Z, so Nview.z > 0 means the fragment faces the camera.
-    vec3 Nview = normalize(mat3(uView) * N);
+    // Decal projection in world space: the disc is painted onto the +Y hemisphere
+    // and stays fixed as the camera orbits. N.xz maps the top of the sphere to UV;
+    // facing = N.y guards the upper hemisphere only.
     vec3 baseColor = uColor;
-    vec2 decalUV = Nview.xy + 0.5;
-    float facing = Nview.z;
+    vec2 decalUV = N.xz + 0.5;
+    float facing = N.y;
     if (facing > 0.0 && decalUV.x >= 0.0 && decalUV.x <= 1.0 &&
                          decalUV.y >= 0.0 && decalUV.y <= 1.0) {
         vec4 texSample = texture(uTexture, decalUV);

@@ -23,6 +23,9 @@ struct Camera
     // Rotates the orbit by a mouse delta (pixels), scaled to radians.
     void onMouseDrag(float dx, float dy);
 
+    // Translates the orbit target in the camera's local right/up plane (right-button pan).
+    void onMousePan(float dx, float dy);
+
     // Zooms by adjusting the orbit radius.
     void onScroll(float delta);
 };

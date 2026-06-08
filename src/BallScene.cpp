@@ -84,7 +84,6 @@ void BallScene::draw(Shader &shader, const glm::mat4 &view, const glm::mat4 &pro
     shader.use();
     shader.setMat4("uView", view);
     shader.setMat4("uProjection", projection);
-    shader.setMat3("uNormalMatrix", glm::mat3(1.0f)); // pure translation — normals unchanged
     shader.setVec3("uLightDir", lightDir);
     shader.setVec3("uCameraPos", cameraPos);
 
@@ -94,6 +93,7 @@ void BallScene::draw(Shader &shader, const glm::mat4 &view, const glm::mat4 &pro
         glm::mat4 model = glm::translate(glm::mat4(1.0f), balls[i].pos);
         model = glm::scale(model, glm::vec3(Table::kBallR));
         shader.setMat4("uModel", model);
+        shader.setMat3("uNormalMatrix", glm::mat3(glm::transpose(glm::inverse(model))));
         sphere.draw();
     }
 }

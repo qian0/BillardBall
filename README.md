@@ -26,7 +26,7 @@ cmake --build build -j$(nproc)
 cmake --build build --target BillardBall
 cmake --build build --target m1_triangle
 cmake --build build --target m2_ball
-cmake --build build --target m3_0_ballOnTable
+cmake --build build --target m3_1_ballOnTable
 ```
 
 ## Run
@@ -38,7 +38,7 @@ cmake --build build --target m3_0_ballOnTable
 # Unit tests (each milestone has its own subfolder)
 ./build/unit_tests/m1/m1_triangle
 ./build/unit_tests/m2/m2_ball
-./build/unit_tests/m3/m3_0_ballOnTable
+./build/unit_tests/m3/m3_1_ballOnTable
 ```
 
 ## Controls
@@ -47,6 +47,7 @@ cmake --build build --target m3_0_ballOnTable
 |-------|--------|
 | Esc | Quit |
 | Left mouse drag | Orbit camera |
+| Right mouse drag | Pan camera |
 | Scroll wheel | Zoom in / out |
 
 ## Project Layout
@@ -71,7 +72,7 @@ BillardBall/
 │   ├── m1/                   # M1 triangle regression test + shaders
 │   ├── m2/                   # M2 single numbered ball regression test + shaders
 │   └── m3/                   # M3 isolated tests + shaders
-│       └── m3_0_ballOnTable  # one ball on a surface with orientation marker
+│       └── m3_1_ballOnTable  # one ball on a surface with orientation marker
 ├── assets/fonts/             # DejaVuSans-Bold.ttf (ball number labels)
 ├── third_party/stb/          # stb_truetype.h (vendored)
 └── plan/                     # architecture doc, milestone plan, progress log

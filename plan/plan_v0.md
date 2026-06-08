@@ -71,8 +71,8 @@ BillardBall/
 ### M3 — Table & Static Scene ✓ Done
 **Goal**: render the full static scene.
 - Flat table quad with felt-green colour; cushions as thin boxes
-- Two shader programs: Phong (balls, interpolated normals, camera-space decal) and flat (table/cushions, derivative face normals via dFdx/dFdy)
-- 16 balls in standard rack formation; ball number disc always faces the camera
+- Two shader programs: Phong (balls, interpolated normals, world-space decal) and flat (table/cushions, derivative face normals via dFdx/dFdy)
+- 16 balls in standard rack formation; ball number disc fixed in world space on the +Y hemisphere
 - Scene split into `BallScene` and `TableScene` structs
 - Unit tests under `unit_tests/m1/`, `unit_tests/m2/`, `unit_tests/m3/`
 - **Test**: all balls visible in rack, camera orbits full table, correct relative scale

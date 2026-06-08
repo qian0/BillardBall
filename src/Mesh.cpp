@@ -91,12 +91,12 @@ Mesh Mesh::uvSphere(int rings, int sectors)
             unsigned int br = bl + 1;
 
             indices.push_back(tl);
-            indices.push_back(bl);
             indices.push_back(tr);
+            indices.push_back(bl);
 
             indices.push_back(tr);
-            indices.push_back(bl);
             indices.push_back(br);
+            indices.push_back(bl);
         }
     }
 
@@ -182,7 +182,7 @@ void Mesh::draw() const
     glBindVertexArray(vao);
     glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
-}
+}  
 
 // Deletes the VAO and both buffer objects from GPU memory.
 void Mesh::destroy()
