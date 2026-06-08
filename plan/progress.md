@@ -10,7 +10,7 @@ _Last updated: 2026-06-07_
 |---|------|--------|
 | M1 | Window + Triangle | Done |
 | M2 | Sphere Renderer + Numbered Ball Texture | Done |
-| M3 | Table & Static Scene | In progress |
+| M3 | Table & Static Scene | Done |
 | M4 | Basic Physics (linear only) | Not started |
 | M5 | Cue Stick Input | Not started |
 | M6 | Rolling Friction & Spin | Not started |
@@ -22,55 +22,54 @@ _Last updated: 2026-06-07_
 ## M1 — Window + Triangle (Done)
 
 **What was built:**
-- CMakeLists.txt wired up: GLAD (vendored), GLFW (system), GLM (FetchContent 1.0.1)
+- CMakeLists.txt: GLAD (vendored), GLFW (system), GLM (FetchContent 1.0.1)
 - GLFW window with OpenGL 3.3 core context, vsync, Esc-to-quit
-- Minimal vertex/fragment shader pair compiles and renders a hard-coded triangle
-- `Shader` class: loads GLSL from disk, compiles both stages, links program, typed uniform setters
-
-**Infrastructure added alongside M1:**
-- `plan/` folder with `plan_v0.md` (architecture + milestone list), `system.txt`, `system_detect.sh`
-- `.vscode/c_cpp_properties.json` pointing at `build/compile_commands.json` for IntelliSense
-- `CMAKE_EXPORT_COMPILE_COMMANDS ON` baked into CMakeLists.txt
-- `util.hpp`: `chdirToExe()` — changes working directory to binary location so relative asset paths resolve regardless of launch directory
-- `unit_tests/` folder with its own `CMakeLists.txt`; test targets built with `-DBUILD_TESTS=ON`
-- `unit_tests/m1_triangle.cpp`: standalone M1 regression test with own shaders
-
-**Key decisions:**
-- `unit_tests/` has its own `CMakeLists.txt` included via `add_subdirectory`; game and tests build independently
-- `add_unit_test(name)` CMake helper function accepts extra source files via `${ARGN}`
+- Minimal vertex/fragment shader pair; hard-coded triangle
+- `Shader` class: loads GLSL from disk, compiles, links, typed uniform setters
+- `util.hpp`: `chdirToExe()` — changes working directory to binary location
+- `unit_tests/m1/m1_triangle.cpp`: standalone regression test
 
 ---
 
 ## M2 — Sphere Renderer + Numbered Ball Texture (Done)
 
 **What was built:**
-- `Mesh` struct: VAO/VBO/EBO wrapper; `uvSphere(rings, sectors)` generates a unit sphere with position (loc 0), normal (loc 1), UV texcoord (loc 2)
-- `Camera` struct: spherical-coordinate orbiting camera; mouse drag orbits (theta/phi), scroll wheel zooms
-- Phong shading (`ball.vert` / `ball.frag`): ambient + diffuse + specular with a single directional light
-- `Texture` struct: uploads RGBA bitmap to GPU, generates mipmaps, typed `bind(unit)` / `destroy()`
-- `BallTexture`: generates a numbered billiard ball texture at runtime using `stb_truetype`
-- `stb_truetype.h` vendored in `third_party/stb/`
-- `DejaVuSans-Bold.ttf` in `assets/fonts/`, deployed next to binary at build time
-- `unit_tests/m2_ball.cpp`: standalone M2 regression test with frozen shaders in `unit_tests/shaders/`
+- `Mesh`: VAO/VBO/EBO wrapper; `uvSphere(rings, sectors)` — position (loc 0), normal (loc 1), UV (loc 2)
+- `Camera`: spherical-coordinate orbiting camera; mouse drag (theta/phi), scroll zoom
+- Phong shading: ambient + diffuse + specular, single directional light
+- `Texture`: uploads RGBA bitmap to GPU, generates mipmaps
+- `BallTexture`: runtime numbered ball texture via `stb_truetype`; disc + centred glyph
+- `unit_tests/m2/m2_ball.cpp`: standalone regression test with frozen shaders
 
 **Key decisions:**
-- Switched from equirectangular UV texture mapping to **decal projection** for the ball number disc. Equirectangular wrapping distorts a circular disc into an oval; decal projection computes UV from the world-space normal (`decalUV = N.xy + 0.5`), giving a geometrically round disc.
-- Number centering uses `stbtt_GetCodepointBitmapBox` to find the tight pixel bounding box rather than the full line-height box — digits have no descenders so line-height centering pushed numbers off-center.
-- BallTexture background is transparent (alpha=0); ball colour is supplied via `uBallColor` uniform.
-- `uUseDecal` bool uniform added to `ball.frag` so non-ball surfaces (table, cushions) don't accidentally sample the ball texture on faces where `N.z > 0`.
+- Switched from equirectangular UV to **decal projection** for the number disc — equirectangular distorts a circle into an oval.
+- Number centering uses `stbtt_GetCodepointBitmapBox` (tight bounding box) rather than full line height — digits have no descenders so line-height centering pushed numbers up.
+- Ball texture background is transparent (alpha=0); ball colour is supplied via `uBallColor` uniform.
+- Cue ball (number=0) skips disc and glyph rendering entirely.
 
 ---
 
-## M3 — Table & Static Scene (In progress)
+## M3 — Table & Static Scene (Done)
 
-**Detailed plan:** `plan/plan_m3_details.md`
+**What was built:**
+- `Table.hpp`: scene constants — `kLength`, `kWidth`, `kCushionH`, `kCushionT`, `kBallR`
+- `Mesh::quad(halfW, halfH)`: flat horizontal quad, position-only VBO, +Y normal (CCW from above)
+- `Mesh::box(halfW, halfH, halfD)`: closed box, position-only VBO, face normals derived per-fragment via `dFdx`/`dFdy` in the flat shader — no duplicated vertices
+- Two shader programs:
+  - `phong.vert/frag` — balls: interpolated normals, Phong lighting, camera-space decal projection
+  - `flat.vert/frag` — table/cushions: position-only VBO, derivative face normals, no specular
+- `BallScene`: owns sphere mesh, 16 textures, rack positions; `create()` / `draw()` / `destroy()`
+- `TableScene`: owns table quad and two cushion meshes (long × 2, short × 2 reused); `create()` / `draw()` / `destroy()`
+- `main.cpp` refactored: GLFW boilerplate + `BallScene::create()` + `TableScene::create()` + render loop
+- `unit_tests/m3/m3_0_ballOnTable.cpp`: isolated test — single ball on flat surface with a "T" orientation marker and a larger number disc (discRadius doubled to `size/2`)
 
-**What remains:**
-- `Mesh::quad` and `Mesh::box` implementations in `Mesh.cpp`
-- `Table.hpp` with scene constants
-- `ball.frag` updated with `uUseDecal` uniform
-- `BallTexture.cpp` updated to skip disc/number for ball 0 (cue ball)
-- `main.cpp` rewritten for the full M3 scene
+**Key decisions:**
+- Separate flat shader for table/cushions avoids storing normals in the VBO and eliminates accidental decal sampling on non-ball geometry.
+- Box mesh uses 8 unique corner vertices; `dFdx`/`dFdy` computes per-triangle face normals in the fragment shader.
+- `GL_CULL_FACE` enabled — all geometry is solid, viewed only from outside.
+- Ball number decal projects from **camera (view) space** (`mat3(uView) * N`), so the disc always appears on the camera-facing hemisphere and is visible from any angle.
+- `discRadius` increased from `size/4` to `size/2` for better readability.
+- Unit tests reorganised into `unit_tests/m1/`, `unit_tests/m2/`, `unit_tests/m3/` subfolders; each has its own `shaders/` and outputs to `build/unit_tests/<mX>/`.
 
 ---
 
@@ -78,22 +77,22 @@ _Last updated: 2026-06-07_
 
 | File | Purpose |
 |------|---------|
-| `src/main.cpp` | Entry point, game loop, GLFW callbacks |
-| `src/Shader.hpp/cpp` | GLSL program wrapper + uniform setters |
-| `src/Mesh.hpp/cpp` | VAO/VBO/EBO + UV sphere, quad, box generators |
+| `src/main.cpp` | Entry point, GLFW loop, camera callbacks |
+| `src/BallScene.hpp/cpp` | 16 balls — mesh, textures, rack layout, draw |
+| `src/TableScene.hpp/cpp` | Table surface + four cushions, draw |
+| `src/Mesh.hpp/cpp` | VAO/VBO/EBO; `uvSphere`, `quad`, `box` |
 | `src/Camera.hpp/cpp` | Spherical-coordinate orbiting camera |
+| `src/Shader.hpp/cpp` | GLSL program wrapper + uniform setters |
 | `src/Texture.hpp/cpp` | 2D GL texture upload and bind |
 | `src/BallTexture.hpp/cpp` | Runtime numbered ball texture via stb_truetype |
 | `src/Table.hpp` | Table dimension constants |
 | `src/util.hpp` | `chdirToExe()` — portable asset path helper |
-| `shaders/ball.vert` | Sphere vertex shader (MVP + normal passthrough) |
-| `shaders/ball.frag` | Phong lighting + decal projection |
-| `unit_tests/m1_triangle.cpp` | M1 standalone regression test |
-| `unit_tests/m2_ball.cpp` | M2 standalone regression test (frozen shaders) |
-| `unit_tests/shaders/` | Shaders used exclusively by unit tests |
+| `shaders/phong.vert/frag` | Phong lighting + camera-space decal (balls) |
+| `shaders/flat.vert/frag` | Derivative-normal flat shading (table, cushions) |
+| `unit_tests/m1/` | M1 triangle regression test + shaders |
+| `unit_tests/m2/` | M2 single numbered ball regression test + shaders |
+| `unit_tests/m3/` | M3 isolated scene tests + shaders |
 | `third_party/stb/stb_truetype.h` | Vendored font rasterizer |
-| `assets/fonts/DejaVuSans-Bold.ttf` | Font used for ball number labels |
-| `plan/plan_v0.md` | Full architecture doc and milestone definitions |
-| `plan/plan_m3_details.md` | Detailed M3 implementation plan |
-| `plan/system.txt` | Auto-generated system/library version report |
-| `plan/system_detect.sh` | Script that regenerates system.txt |
+| `assets/fonts/DejaVuSans-Bold.ttf` | Font for ball number labels |
+| `plan/plan_v0.md` | Architecture doc and milestone definitions |
+| `plan/plan_m3_details.md` | M3 detailed implementation plan |

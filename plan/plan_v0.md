@@ -68,12 +68,14 @@ BillardBall/
 - Orbiting camera controlled by mouse drag (arcball or spherical coords)
 - **Test**: sphere visible, shading changes as camera orbits, no z-fighting artefacts
 
-### M3 — Table & Static Scene
+### M3 — Table & Static Scene ✓ Done
 **Goal**: render the full static scene.
-- Flat table quad with a felt-green colour/texture
-- Cushion walls rendered as thin boxes or coloured quads
-- 16 balls placed in standard rack formation (one cue ball, 15 object balls)
-- **Test**: all balls visible in rack, camera can orbit the full table, correct relative scale
+- Flat table quad with felt-green colour; cushions as thin boxes
+- Two shader programs: Phong (balls, interpolated normals, camera-space decal) and flat (table/cushions, derivative face normals via dFdx/dFdy)
+- 16 balls in standard rack formation; ball number disc always faces the camera
+- Scene split into `BallScene` and `TableScene` structs
+- Unit tests under `unit_tests/m1/`, `unit_tests/m2/`, `unit_tests/m3/`
+- **Test**: all balls visible in rack, camera orbits full table, correct relative scale
 
 ### M4 — Basic Physics (linear only)
 **Goal**: balls move and bounce off each other and cushions.

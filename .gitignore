@@ -1,6 +1,7 @@
 # Built things
 _Debug/
 Compiled/
+build/
 
 # AudioCache can be rebuilt from sources
 AudioCache/

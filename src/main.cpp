@@ -6,10 +6,9 @@
 #include <iostream>
 
 #include "Shader.hpp"
-#include "Mesh.hpp"
 #include "Camera.hpp"
-#include "Texture.hpp"
-#include "BallTexture.hpp"
+#include "BallScene.hpp"
+#include "TableScene.hpp"
 #include "util.hpp"
 
 static const int WINDOW_W = 1280;
@@ -68,7 +67,7 @@ static void onScroll(GLFWwindow *window, double /*xOffset*/, double yOffset)
     ctx->camera->onScroll(static_cast<float>(yOffset));
 }
 
-// Entry point: initialises GLFW + OpenGL, builds a lit sphere, and runs the render loop.
+// Entry point: builds the full static M3 scene (table, cushions, 16 balls) and runs the render loop.
 int main()
 {
     chdirToExe();
@@ -82,7 +81,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(WINDOW_W, WINDOW_H, "BillardBall — M2", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WINDOW_W, WINDOW_H, "BillardBall — M3", nullptr, nullptr);
     if (!window) {
         std::cerr << "glfwCreateWindow failed\n";
         glfwTerminate();
@@ -103,9 +102,10 @@ int main()
 
     glViewport(0, 0, WINDOW_W, WINDOW_H);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE); // all geometry is solid and viewed from outside
 
-    // Camera starting position: 5 units back, slightly elevated, looking at the origin
-    Camera camera(5.0f, 0.0f, 0.4f);
+    // Camera starting position: 3/4 overhead view showing the full table
+    Camera camera(10.0f, 0.3f, 0.9f);
 
     AppContext ctx;
     ctx.camera = &camera;
@@ -117,53 +117,42 @@ int main()
     glfwSetCursorPosCallback(window, onCursorPos);
     glfwSetScrollCallback(window, onScroll);
 
-    Mesh sphere = Mesh::uvSphere(32, 32);
-    Shader shader("shaders/ball.vert", "shaders/ball.frag");
+    // --- Scene ---
+    BallScene ballScene   = BallScene::create("assets/fonts/DejaVuSans-Bold.ttf");
+    TableScene tableScene = TableScene::create();
 
-    // Generate a numbered ball texture — number 8, black ball
-    Texture ballTex = BallTexture::generate(8, glm::vec3(0.08f, 0.08f, 0.08f),
-                                            "assets/fonts/DejaVuSans-Bold.ttf");
+    // --- Shaders ---
+    Shader phong("shaders/phong.vert", "shaders/phong.frag");
+    Shader flat("shaders/flat.vert",   "shaders/flat.frag");
 
-    // Diagonal light direction (above and to the side), gives clear shading on a sphere
-    const glm::vec3 lightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 1.0f));
-    const glm::vec3 ballColor(0.08f, 0.08f, 0.08f);
+    phong.use();
+    phong.setInt("uTexture", 0);
 
-    const glm::mat4 model(1.0f);
-    const glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(model)));
+    const glm::vec3 kLightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 1.0f));
+
     const glm::mat4 projection = glm::perspective(
         glm::radians(45.0f),
         static_cast<float>(WINDOW_W) / WINDOW_H,
         0.1f, 100.0f
     );
 
-    // Tell the shader which texture unit holds the ball texture
-    shader.use();
-    shader.setInt("uTexture", 0);
-
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        glClearColor(0.12f, 0.18f, 0.12f, 1.0f);
+        glClearColor(0.05f, 0.05f, 0.08f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        ballTex.bind(0);
+        const glm::mat4 view   = camera.viewMatrix();
+        const glm::vec3 camPos = camera.position();
 
-        shader.use();
-        shader.setMat4("uModel", model);
-        shader.setMat4("uView", camera.viewMatrix());
-        shader.setMat4("uProjection", projection);
-        shader.setMat3("uNormalMatrix", normalMatrix);
-        shader.setVec3("uCameraPos", camera.position());
-        shader.setVec3("uLightDir", lightDir);
-        shader.setVec3("uBallColor", ballColor);
-
-        sphere.draw();
+        tableScene.draw(flat,  view, projection, kLightDir);
+        ballScene.draw(phong, view, projection, kLightDir, camPos);
 
         glfwSwapBuffers(window);
     }
 
-    ballTex.destroy();
-    sphere.destroy();
+    ballScene.destroy();
+    tableScene.destroy();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
