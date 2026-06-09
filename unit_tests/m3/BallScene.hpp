@@ -1,13 +1,11 @@
 #pragma once
 
-#include <array>
 #include <glm/glm.hpp>
 #include <string>
 
 #include "Mesh.hpp"
 #include "Texture.hpp"
 #include "Shader.hpp"
-#include "Physics.hpp"
 
 // Position, colour, and number label for a single ball.
 struct BallDef
@@ -27,14 +25,9 @@ struct BallScene
     // Creates the sphere mesh, generates 16 ball textures, and places balls in rack formation.
     static BallScene create(const std::string &fontPath);
 
-    // Draws all 16 balls at their static rack positions (M3 regression use).
+    // Draws all 16 balls using the Phong shader with decal projection.
     void draw(Shader &shader, const glm::mat4 &view, const glm::mat4 &projection,
               const glm::vec3 &lightDir, const glm::vec3 &cameraPos) const;
-
-    // Draws all 16 balls at the positions supplied by the physics engine.
-    void draw(Shader &shader, const glm::mat4 &view, const glm::mat4 &projection,
-              const glm::vec3 &lightDir, const glm::vec3 &cameraPos,
-              const std::array<BallState, 16> &states) const;
 
     // Releases all GPU resources.
     void destroy();

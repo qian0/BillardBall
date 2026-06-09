@@ -9,17 +9,15 @@ uniform mat4 uView;         // transforms from world space into camera space
 uniform mat4 uProjection;   // perspective projection — maps camera space to clip space
 uniform mat3 uNormalMatrix; // transpose(inverse(mat3(uModel))) — keeps normals correct under non-uniform scale
 
-out vec3 vWorldPos;   // world-space position of this vertex, used for lighting distance/direction in the fragment shader
-out vec3 vNormal;     // world-space surface normal, interpolated across the triangle for per-fragment Phong shading
-out vec3 vLocalNormal; // object-space normal — used for decal projection so the disc rotates with the ball
-out vec2 vTexCoord;   // UV passed through to the fragment shader for texture sampling
+out vec3 vWorldPos;  // world-space position of this vertex, used for lighting distance/direction in the fragment shader
+out vec3 vNormal;    // world-space surface normal, interpolated across the triangle for per-fragment Phong shading
+out vec2 vTexCoord;  // UV passed through to the fragment shader for texture sampling
 
 void main()
 {
     vec4 worldPos = uModel * vec4(aPos, 1.0);
     vWorldPos = worldPos.xyz;
     vNormal = uNormalMatrix * aNormal;
-    vLocalNormal = aNormal;
     vTexCoord = aTexCoord;
     gl_Position = uProjection * uView * worldPos;
 }

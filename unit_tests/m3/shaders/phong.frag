@@ -1,8 +1,7 @@
 #version 330 core
 
-in vec3 vWorldPos;    // interpolated world-space position from the vertex shader
-in vec3 vNormal;      // interpolated world-space normal from the vertex shader
-in vec3 vLocalNormal; // interpolated object-space normal — drives decal UV so the disc rolls with the ball
+in vec3 vWorldPos;  // interpolated world-space position from the vertex shader
+in vec3 vNormal;    // interpolated world-space normal from the vertex shader
 
 uniform vec3 uCameraPos;    // world-space eye position — used to compute the view direction for specular reflection
 uniform vec3 uLightDir;     // world-space direction pointing toward the light source (not the surface) — kept as a directional light so shadows are uniform across the table
@@ -22,13 +21,12 @@ void main()
     float diffuse  = max(dot(N, L), 0.0);
     float specular = pow(max(dot(R, V), 0.0), 64.0);
 
-    // Decal projection in object space: the disc is painted onto the ball's local +Y hemisphere
-    // and rotates with the ball as it rolls. Using the local normal means the number follows
-    // the ball's orientation rather than always sitting at the world-space top.
+    // Decal projection in world space: the disc is painted onto the +Y hemisphere
+    // and stays fixed as the camera orbits. N.xz maps the top of the sphere to UV;
+    // facing = N.y guards the upper hemisphere only.
     vec3 baseColor = uColor;
-    vec3 localN = normalize(vLocalNormal);
-    vec2 decalUV = localN.xz + 0.5;
-    float facing = localN.y;
+    vec2 decalUV = N.xz + 0.5;
+    float facing = N.y;
     if (facing > 0.0 && decalUV.x >= 0.0 && decalUV.x <= 1.0 &&
                          decalUV.y >= 0.0 && decalUV.y <= 1.0) {
         vec4 texSample = texture(uTexture, decalUV);

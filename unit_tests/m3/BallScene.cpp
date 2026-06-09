@@ -1,7 +1,6 @@
 #include "BallScene.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
 #include <cmath>
 
 #include "BallTexture.hpp"
@@ -93,30 +92,6 @@ void BallScene::draw(Shader &shader, const glm::mat4 &view, const glm::mat4 &pro
         shader.setVec3("uColor", balls[i].color);
         glm::mat4 model = glm::translate(glm::mat4(1.0f), balls[i].pos);
         model = glm::scale(model, glm::vec3(Table::kBallR));
-        shader.setMat4("uModel", model);
-        shader.setMat3("uNormalMatrix", glm::mat3(glm::transpose(glm::inverse(model))));
-        sphere.draw();
-    }
-}
-
-// Draws all 16 balls at the positions supplied by the physics engine.
-void BallScene::draw(Shader &shader, const glm::mat4 &view, const glm::mat4 &projection,
-                     const glm::vec3 &lightDir, const glm::vec3 &cameraPos,
-                     const std::array<BallState, 16> &states) const
-{
-    shader.use();
-    shader.setMat4("uView", view);
-    shader.setMat4("uProjection", projection);
-    shader.setVec3("uLightDir", lightDir);
-    shader.setVec3("uCameraPos", cameraPos);
-
-    for (int i = 0; i < 16; ++i) {
-        if (states[i].pocketed) { continue; }
-        textures[i].bind(0);
-        shader.setVec3("uColor", balls[i].color);
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), states[i].pos)
-                        * glm::mat4_cast(states[i].rotation)
-                        * glm::scale(glm::mat4(1.0f), glm::vec3(Table::kBallR));
         shader.setMat4("uModel", model);
         shader.setMat3("uNormalMatrix", glm::mat3(glm::transpose(glm::inverse(model))));
         sphere.draw();

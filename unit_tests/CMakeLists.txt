@@ -60,3 +60,31 @@ add_unit_test(m3_1_ballOnTable m3
 )
 target_include_directories(m3_1_ballOnTable PRIVATE ${CMAKE_SOURCE_DIR}/third_party)
 copy_assets(m3_1_ballOnTable m3)
+
+# m3_5: full-scene archive — BallScene and TableScene are frozen copies in unit_tests/m3/
+# so that M4 changes to src/ do not affect this regression test.
+add_unit_test(m3_5_fullScene m3
+    ${CMAKE_SOURCE_DIR}/unit_tests/m3/BallScene.cpp
+    ${CMAKE_SOURCE_DIR}/unit_tests/m3/TableScene.cpp
+    ${CMAKE_SOURCE_DIR}/src/Mesh.cpp
+    ${CMAKE_SOURCE_DIR}/src/Camera.cpp
+    ${CMAKE_SOURCE_DIR}/src/Texture.cpp
+    ${CMAKE_SOURCE_DIR}/src/BallTexture.cpp
+)
+# unit_tests/m3 listed first so local BallScene.hpp/TableScene.hpp shadow src/ versions.
+target_include_directories(m3_5_fullScene BEFORE PRIVATE
+    ${CMAKE_SOURCE_DIR}/unit_tests/m3
+    ${CMAKE_SOURCE_DIR}/third_party
+)
+copy_assets(m3_5_fullScene m3)
+
+# --- M4 ---
+add_unit_test(m4_1_movingBalls m4
+    ${CMAKE_SOURCE_DIR}/src/Physics.cpp
+    ${CMAKE_SOURCE_DIR}/src/Mesh.cpp
+    ${CMAKE_SOURCE_DIR}/src/Camera.cpp
+    ${CMAKE_SOURCE_DIR}/src/Texture.cpp
+    ${CMAKE_SOURCE_DIR}/src/BallTexture.cpp
+)
+target_include_directories(m4_1_movingBalls PRIVATE ${CMAKE_SOURCE_DIR}/third_party)
+copy_assets(m4_1_movingBalls m4)

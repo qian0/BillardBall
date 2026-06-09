@@ -1,17 +1,19 @@
+// M3.5 — Archive snapshot of the complete M3 scene (main.cpp as of milestone 3 completion).
+// Full table with four cushions and all 16 balls in rack formation.
+// Two shaders: phong (balls) and flat (table/cushions).
+// Left drag orbits, right drag pans, scroll zooms.
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <algorithm>
 #include <iostream>
 
 #include "Shader.hpp"
 #include "Camera.hpp"
 #include "BallScene.hpp"
 #include "TableScene.hpp"
-#include "Physics.hpp"
-#include "Table.hpp"
 #include "util.hpp"
 
 static const int WINDOW_W = 1280;
@@ -21,22 +23,17 @@ static const int WINDOW_H = 720;
 struct AppContext
 {
     Camera *camera;
-    Physics *physics;
     bool mouseDown = false;
     bool rightMouseDown = false;
     double lastMouseX = 0.0;
     double lastMouseY = 0.0;
 };
 
-// GLFW keyboard callback — Escape quits; Space fires the cue ball toward the rack.
+// GLFW keyboard callback — closes the window when Escape is pressed.
 static void onKey(GLFWwindow *window, int key, int /*scancode*/, int action, int /*mods*/)
 {
-    auto *ctx = static_cast<AppContext *>(glfwGetWindowUserPointer(window));
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
-    }
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-        ctx->physics->balls[0].vel = glm::vec3(4.5f, 0.0f, 0.0f);
     }
 }
 
@@ -83,7 +80,7 @@ static void onScroll(GLFWwindow *window, double /*xOffset*/, double yOffset)
     ctx->camera->onScroll(static_cast<float>(yOffset));
 }
 
-// Entry point: full M4 scene — 16 balls in rack, Space fires the cue ball.
+// Entry point: builds the full static M3 scene (table, cushions, 16 balls) and runs the render loop.
 int main()
 {
     chdirToExe();
@@ -97,7 +94,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(WINDOW_W, WINDOW_H, "BillardBall — M4 [Space to shoot]", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WINDOW_W, WINDOW_H, "M3.5 — Full Static Scene", nullptr, nullptr);
     if (!window) {
         std::cerr << "glfwCreateWindow failed\n";
         glfwTerminate();
@@ -115,7 +112,6 @@ int main()
 
     std::cout << "OpenGL " << glGetString(GL_VERSION)
               << "  renderer: " << glGetString(GL_RENDERER) << '\n';
-    std::cout << "Press Space to fire the cue ball.\n";
 
     glViewport(0, 0, WINDOW_W, WINDOW_H);
     glEnable(GL_DEPTH_TEST);
@@ -124,26 +120,8 @@ int main()
     // Camera starting position: 3/4 overhead view showing the full table
     Camera camera(10.0f, 0.3f, 0.9f);
 
-    // --- Scene ---
-    BallScene ballScene   = BallScene::create("assets/fonts/DejaVuSans-Bold.ttf");
-    TableScene tableScene = TableScene::create();
-
-    // --- Physics — seed positions from the static rack layout ---
-    Physics physics;
-    for (int i = 0; i < 16; ++i) {
-        physics.balls[i] = {
-            .pos      = ballScene.balls[i].pos,
-            .vel      = glm::vec3(0.0f),
-            .rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-            .radius   = Table::kBallR,
-            .invMass  = 1.0f,
-            .pocketed = false,
-        };
-    }
-
     AppContext ctx;
-    ctx.camera  = &camera;
-    ctx.physics = &physics;
+    ctx.camera = &camera;
 
     glfwSetWindowUserPointer(window, &ctx);
     glfwSetKeyCallback(window, onKey);
@@ -151,6 +129,10 @@ int main()
     glfwSetMouseButtonCallback(window, onMouseButton);
     glfwSetCursorPosCallback(window, onCursorPos);
     glfwSetScrollCallback(window, onScroll);
+
+    // --- Scene ---
+    BallScene ballScene   = BallScene::create("assets/fonts/DejaVuSans-Bold.ttf");
+    TableScene tableScene = TableScene::create();
 
     // --- Shaders ---
     Shader phong("shaders/phong.vert", "shaders/phong.frag");
@@ -167,21 +149,8 @@ int main()
         0.1f, 100.0f
     );
 
-    double prevTime    = glfwGetTime();
-    double accumulator = 0.0;
-
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
-
-        // Fixed-timestep physics accumulator — capped to avoid spiral-of-death on pauses
-        double now = glfwGetTime();
-        double dt  = std::min(now - prevTime, 0.25);
-        prevTime   = now;
-        accumulator += dt;
-        while (accumulator >= Physics::kDt) {
-            physics.step();
-            accumulator -= Physics::kDt;
-        }
 
         glClearColor(0.05f, 0.05f, 0.08f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -189,8 +158,8 @@ int main()
         const glm::mat4 view   = camera.viewMatrix();
         const glm::vec3 camPos = camera.position();
 
-        tableScene.draw(flat, view, projection, kLightDir);
-        ballScene.draw(phong, view, projection, kLightDir, camPos, physics.balls);
+        tableScene.draw(flat,  view, projection, kLightDir);
+        ballScene.draw(phong, view, projection, kLightDir, camPos);
 
         glfwSwapBuffers(window);
     }
